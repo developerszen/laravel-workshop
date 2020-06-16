@@ -14,8 +14,13 @@ class CreateBookCategoryTable extends Migration
     public function up()
     {
         Schema::create('book_category', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+            $table->unsignedInteger('id', true);
+
+            $table->unsignedInteger('fk_category');
+            $table->foreign('fk_category')->references('id')->on('categories');
+
+            $table->unsignedInteger('fk_book');
+            $table->foreign('fk_book')->references('id')->on('books');
         });
     }
 
