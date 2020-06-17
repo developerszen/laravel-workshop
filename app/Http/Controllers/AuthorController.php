@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Author;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AuthorController extends Controller
 {
@@ -27,7 +28,29 @@ class AuthorController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'unique:authors,name'
+            ],
+            'avatar' => [
+                'nullable',
+                'image'
+            ]
+        ]);
+
+        $record = Author::create([
+            'fk_created_by' => 1,
+            'name' => $request->input('name'),
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('images/authors', 'public');
+            $record->update(['avatar' => $path]);
+        }
+
+        return $record;
     }
 
     /**
@@ -38,7 +61,14 @@ class AuthorController extends Controller
      */
     public function show(Author $author)
     {
-        return $author;
+        return $author->load([
+            'createdBy' => function($query) {
+                $query->select('id', 'name');
+            },
+            'updatedBy' => function($query) {
+                $query->select('id', 'name');
+            },
+        ]);
     }
 
     /**
@@ -48,9 +78,33 @@ class AuthorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Author $author)
     {
-        //
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'unique:authors,name,' . $author->id,
+            ],
+            'avatar' => [
+                'nullable',
+                'image'
+            ]
+        ]);
+
+        $author->update([
+            'fk_updated_by' => 1,
+            'name' => $request->input('name'),
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            Storage::disk('public')->delete($author->avatar);
+
+            $path = $request->file('avatar')->store('images/authors', 'public');
+            $author->update(['avatar' => $path]);
+        }
+
+        return $author;
     }
 
     /**
@@ -59,8 +113,12 @@ class AuthorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Author $author)
     {
-        //
+        Storage::disk('public')->delete($author->avatar);
+
+        $author->delete();
+
+        return response([], 204);
     }
 }

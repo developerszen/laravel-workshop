@@ -25,6 +25,8 @@ class CreateAuthorsTable extends Migration
             $table->string('name', 40);
             $table->string('avatar')->nullable();
 
+            $table->softDeletes();
+
             $table->timestamps();
         });
     }

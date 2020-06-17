@@ -25,6 +25,8 @@ class CreateEditorialsTable extends Migration
             $table->string('name', 40);
             $table->string('image')->nullable();
 
+            $table->softDeletes();
+
             $table->timestamps();
         });
     }

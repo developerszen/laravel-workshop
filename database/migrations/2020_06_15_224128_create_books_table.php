@@ -25,6 +25,8 @@ class CreateBooksTable extends Migration
             $table->string('title', 80);
             $table->mediumText('synopsis');
 
+            $table->softDeletes();
+
             $table->timestamps();
         });
     }

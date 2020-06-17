@@ -32,6 +32,8 @@ class CreateFormatsTable extends Migration
             $table->string('image')->nullable();
             $table->unsignedFloat('price');
 
+            $table->softDeletes();
+
             $table->timestamps();
         });
     }
