@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Author;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class AuthorController extends Controller
 {
@@ -13,9 +14,13 @@ class AuthorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $records = Author::get(['id', 'name', 'avatar', 'created_at']);
+        $records = Author::latest()
+            ->when($request->has('name'), function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->query('name') .'%');
+            })
+            ->get(['id', 'name', 'avatar', 'created_at']);
 
         return $records;
     }
@@ -32,7 +37,9 @@ class AuthorController extends Controller
             'name' => [
                 'required',
                 'string',
-                'unique:authors,name'
+                Rule::unique('authors')->where(function ($query) {
+                    return $query->where('deleted_at', null);
+                }),
             ],
             'avatar' => [
                 'nullable',
@@ -84,7 +91,11 @@ class AuthorController extends Controller
             'name' => [
                 'required',
                 'string',
-                'unique:authors,name,' . $author->id,
+                Rule::unique('authors')
+                    ->where(function ($query) {
+                        return $query->where('deleted_at', null);
+                    })
+                    ->ignore($author->id),
             ],
             'avatar' => [
                 'nullable',

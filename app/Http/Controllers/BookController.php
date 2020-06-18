@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Book;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
@@ -11,9 +12,20 @@ class BookController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $records = Book::latest()
+            ->when($request->has('title'), function ($query) use ($request) {
+                $query->where('title', 'like', '%' . $request->query('title') .'%');
+            })
+            ->when($request->has('author'), function ($query) use ($request) {
+                $query->whereHas('authors', function ($query) use ($request) {
+                    $query->where('fk_author', $request->query('author'));
+                });
+            })
+            ->get(['id', 'title', 'created_at']);
+
+        return $records;
     }
 
     /**

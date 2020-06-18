@@ -11,6 +11,8 @@ class Author extends Model
 
     protected $fillable = ['fk_created_by', 'fk_updated_by', 'name', 'avatar'];
 
+    protected $hidden = ['deleted_at'];
+
     function createdBy() {
         return $this->belongsTo(User::class, 'fk_created_by');
     }
