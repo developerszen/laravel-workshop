@@ -23,6 +23,11 @@ class BookController extends Controller
                     $query->where('fk_author', $request->query('author'));
                 });
             })
+            ->when($request->has('category'), function ($query) use ($request) {
+                $query->whereHas('categories', function ($query) use ($request) {
+                    $query->where('fk_category', $request->query('category'));
+                });
+            })
             ->get(['id', 'title', 'created_at']);
 
         return $records;
@@ -36,7 +41,7 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
     }
 
     /**

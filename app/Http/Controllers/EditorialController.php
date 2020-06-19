@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Editorial;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class EditorialController extends Controller
 {
@@ -11,9 +14,15 @@ class EditorialController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $records = Editorial::latest()
+            ->when($request->has('name'), function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->query('name') .'%');
+            })
+            ->get(['id', 'name', 'image', 'created_at']);
+
+        return $records;
     }
 
     /**
@@ -24,7 +33,31 @@ class EditorialController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                Rule::unique('editorials')->where(function ($query) {
+                    return $query->where('deleted_at', null);
+                }),
+            ],
+            'image' => [
+                'nullable',
+                'image'
+            ]
+        ]);
+
+        $record = Editorial::create([
+            'fk_created_by' => 1,
+            'name' => $request->input('name'),
+        ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('images/editorials', 'public');
+            $record->update(['image' => $path]);
+        }
+
+        return $record;
     }
 
     /**
@@ -33,9 +66,16 @@ class EditorialController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Editorial $editorial)
     {
-        //
+        return $editorial->load([
+            'createdBy' => function($query) {
+                $query->select('id', 'name');
+            },
+            'updatedBy' => function($query) {
+                $query->select('id', 'name');
+            },
+        ]);
     }
 
     /**
@@ -45,9 +85,37 @@ class EditorialController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Editorial $editorial)
     {
-        //
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                Rule::unique('editorials')
+                    ->where(function ($query) {
+                        return $query->where('deleted_at', null);
+                    })
+                    ->ignore($editorial->id),
+            ],
+            'image' => [
+                'nullable',
+                'image'
+            ]
+        ]);
+
+        $editorial->update([
+            'fk_updated_by' => 1,
+            'name' => $request->input('name'),
+        ]);
+
+        if ($request->hasFile('image')) {
+            Storage::disk('public')->delete($editorial->avatar);
+
+            $path = $request->file('image')->store('images/editorials', 'public');
+            $editorial->update(['image' => $path]);
+        }
+
+        return $editorial;
     }
 
     /**
@@ -56,8 +124,12 @@ class EditorialController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Editorial $editorial)
     {
-        //
+        Storage::disk('public')->delete($editorial);
+
+        $editorial->delete();
+
+        return response([], 204);
     }
 }
