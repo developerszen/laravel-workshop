@@ -6,12 +6,11 @@
 </head>
 <body>
     <div>
-        <h3>Recuperación de contraseña</h3>
+        <h3>Recuperación de contraseña!!</h3>
+        <p>Usuario: {{ $user->name }}</p>
         <p>Por favor siga el siguiente enlace: </p>
 
-        {{ $user->reset_token }}
-
-        <a href="">
+        <a href="http://laravel-workshop.test/password-recovery?reset_token={{ $user->reset_token }}">
             Recuperar contraseña
         </a>
     </div>

@@ -48,7 +48,7 @@ class AuthorController extends Controller
         ]);
 
         $record = Author::create([
-            'fk_created_by' => 1,
+            'fk_created_by' => auth()->user()->id,
             'name' => $request->input('name'),
         ]);
 
@@ -104,7 +104,7 @@ class AuthorController extends Controller
         ]);
 
         $author->update([
-            'fk_updated_by' => 1,
+            'fk_updated_by' => auth()->user()->id,
             'name' => $request->input('name'),
         ]);
 

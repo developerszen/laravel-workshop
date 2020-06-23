@@ -58,7 +58,7 @@ class AuthController extends Controller
 
         $reset_token = $this->generateToken();
 
-        $user = User::where('email', $email)->select('id', 'reset_token')->firstOrFail();
+        $user = User::where('email', $email)->select('id', 'name', 'reset_token')->firstOrFail();
 
         $user->update([
             'reset_token' => $reset_token,
@@ -66,6 +66,23 @@ class AuthController extends Controller
 
         Mail::to($email)->send(new PasswordRecovery($user));
 
+        return response([], 204);
+    }
+
+    function passwordRecovery(Request $request) {
+        $request->validate([
+           'new_password' => 'required|string'
+        ]);
+
+        $user = User::where([
+            'reset_token' => $request->query('reset_token')
+        ])
+            ->firstOrFail();
+
+        $user->update([
+            'password' => bcrypt($request->input('new_password')),
+            'reset_token' => null,
+        ]);
 
         return response([], 204);
     }
