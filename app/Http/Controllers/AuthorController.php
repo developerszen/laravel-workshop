@@ -37,6 +37,15 @@ class AuthorController extends Controller
             'name' => [
                 'required',
                 'string',
+                'alpha_spaces',
+//                function ($attribute, $value, $fail) {
+//                    $regex = '/^[\pL\.\s]+$/u';
+//
+//                    if (!preg_match($regex, $value)) {
+//                        $fail(trans('validation.alpha_spaces'));
+//                    }
+//
+//                },
                 Rule::unique('authors')->where(function ($query) {
                     return $query->where('deleted_at', null);
                 }),

@@ -2,10 +2,16 @@
 
 namespace App;
 
+use App\Traits\Logs;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
 {
+    use SoftDeletes, Logs;
+
+    protected $fillable = ['fk_created_by', 'title', 'synopsis'];
+
     function authors() {
         return $this->belongsToMany(Author::class, 'author_book', 'fk_book', 'fk_author');
     }

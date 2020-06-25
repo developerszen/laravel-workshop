@@ -41,7 +41,20 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'authors' => 'required|array',
+            'categories' => 'required|array',
+            'title' => 'required|unique:books,title',
+            'synopsis' => 'required|string',
+        ]);
 
+        $record = Book::create([
+            'fk_created_by' => auth()->user()->id,
+            'title' => $request->input('title'),
+            'synopsis' => $request->input('synopsis'),
+        ]);
+
+        return $record;
     }
 
     /**
@@ -50,9 +63,22 @@ class BookController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Book $book)
     {
-        //
+        return $book->load([
+            'authors' => function($query) {
+                $query->select('authors.id', 'name');
+            },
+            'categories' => function($query) {
+                $query->select('categories.id', 'name');
+            },
+            'createdBy' => function($query) {
+                $query->select('id', 'name');
+            },
+            'updatedBy' => function($query) {
+                $query->select('id', 'name');
+            },
+        ]);
     }
 
     /**
