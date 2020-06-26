@@ -12,6 +12,10 @@ class Book extends Model
 
     protected $fillable = ['fk_created_by', 'title', 'synopsis'];
 
+    function formats() {
+        return $this->hasMany(Format::class, 'fk_book');
+    }
+
     function authors() {
         return $this->belongsToMany(Author::class, 'author_book', 'fk_book', 'fk_author');
     }

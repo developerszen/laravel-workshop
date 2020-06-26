@@ -16,7 +16,7 @@ class BookController extends Controller
     {
         $records = Book::latest()
             ->when($request->has('title'), function ($query) use ($request) {
-                $query->where('title', 'like', '%' . $request->query('title') .'%');
+                $query->where('title', 'like', '%' . $request->query('title') . '%');
             })
             ->when($request->has('author'), function ($query) use ($request) {
                 $query->whereHas('authors', function ($query) use ($request) {
@@ -36,7 +36,7 @@ class BookController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -54,28 +54,32 @@ class BookController extends Controller
             'synopsis' => $request->input('synopsis'),
         ]);
 
+        $record->authors()->attach($request->input('authors'));
+
+        $record->categories()->attach($request->input('categories'));
+
         return $record;
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
     public function show(Book $book)
     {
         return $book->load([
-            'authors' => function($query) {
+            'authors' => function ($query) {
                 $query->select('authors.id', 'name');
             },
-            'categories' => function($query) {
+            'categories' => function ($query) {
                 $query->select('categories.id', 'name');
             },
-            'createdBy' => function($query) {
+            'createdBy' => function ($query) {
                 $query->select('id', 'name');
             },
-            'updatedBy' => function($query) {
+            'updatedBy' => function ($query) {
                 $query->select('id', 'name');
             },
         ]);
@@ -84,23 +88,46 @@ class BookController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  \Illuminate\Http\Request $request
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Book $book)
     {
-        //
+        $request->validate([
+            'authors' => 'required|array',
+            'categories' => 'required|array',
+            'title' => 'required|unique:books,title,' . $book->id,
+            'synopsis' => 'required|string',
+        ]);
+
+        $book->update([
+            'fk_updated_by' => auth()->user()->id,
+            'title' => $request->input('title'),
+            'synopsis' => $request->input('synopsis'),
+        ]);
+
+        $book->authors()->attach($request->input('authors'));
+
+        $book->categories()->attach($request->input('categories'));
+
+        return $book;
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Book $book)
     {
-        //
+        $book->formats()->each(function ($format) {
+            $format->delete();
+        });
+
+        $book->delete();
+
+        return response([], 204);
     }
 }
